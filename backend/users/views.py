@@ -1,3 +1,8 @@
-from django.shortcuts import render
+from djoser.views import UserViewSet
+from rest_framework.decorators import action
 
-# Create your views here.
+
+class UserViewSet(UserViewSet):
+    action(methods=['PUT', 'DELETE'], url_path='me/avatar/')
+    def update_avatar(self, request, *args, **kwargs):
+        
