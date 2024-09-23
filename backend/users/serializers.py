@@ -1,7 +1,18 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
+import base64
+from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 
 User = get_user_model()
+
+
+class UserCreateSerializer(BaseUserCreateSerializer):
+    class Meta(BaseUserCreateSerializer.Meta):
+        model = User
+        fields = ('id', 'email', 'username', 'first_name',
+                  'last_name', 'password')
+        read_only_fields = ('id',)
 
 
 class Base64ImageField(serializers.ImageField):
@@ -16,7 +27,8 @@ class Base64ImageField(serializers.ImageField):
 
 
 class UserAvatarSerializer(serializers.ModelSerializer):
-    avatar = 
+    avatar = Base64ImageField(required=False)
+
     class Meta:
         model = User
         fields = ('avatar',)

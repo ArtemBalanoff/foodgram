@@ -7,7 +7,7 @@ User = get_user_model()
 
 
 class Ingredient(models.Model):
-    class MeasureUnits(models.TextChoices):
+    class MeasurementUnits(models.TextChoices):
         GRAM = 'gram', 'г'
         KILOGRAM = 'kilogram', 'кг'
         MILILITER = 'mililiter', 'мл'
@@ -21,9 +21,9 @@ class Ingredient(models.Model):
         CUBE = 'cube', 'кубик'
         CUP = 'cup', 'стакан'
     name = models.CharField('Название', max_length=NAME_MAX_LENGTH)
-    measure_unit = models.TextField(
-        'Единица измерения', choices=MeasureUnits.choices,
-        max_length=max(map(len, MeasureUnits.values)))
+    measurement_unit = models.TextField(
+        'Единица измерения', choices=MeasurementUnits.choices,
+        max_length=max(map(len, MeasurementUnits.values)))
 
 
 class Tag(models.Model):
@@ -37,10 +37,10 @@ class Recipe(models.Model):
         verbose_name='Автор',)
     name = models.CharField('Название', max_length=NAME_MAX_LENGTH)
     image = models.ImageField('Изображение', upload_to='recipes/images/')
-    description = models.TextField('Описание')
+    text = models.TextField('Описание')
     ingredients = models.ManyToManyField(
         Ingredient, through='RecipeIngredient', verbose_name='Ингредиенты')
-    cook_duration = models.DurationField('Время приготовления')
+    cooking_time = models.PositiveSmallIntegerField('Время приготовления')
     tags = models.ManyToManyField(Tag, related_name='recipes',
                                   verbose_name='Теги')
 
