@@ -1,10 +1,26 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from django.core.files.base import ContentFile
-import base64
-from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
+from djoser.serializers import (
+    UserCreateSerializer as BaseUserCreateSerializer,
+    UserSerializer as BaseUserSerializer)
+
+from foodgram_backend.serializers import Base64ImageField
 
 User = get_user_model()
+
+
+class UserSerializer(BaseUserSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta(BaseUserSerializer.Meta):
+        model = User
+        fields = ('id', 'email', 'username', 'first_name',
+                  'last_name', 'is_subscribed', 'avatar')
+
+    def get_is_subscribed(self, obj):
+        cur_user = self.context.get('request').user
+        return bool(cur_user.is_authenticated
+                    and obj in cur_user.subscriptions.all())
 
 
 class UserCreateSerializer(BaseUserCreateSerializer):
@@ -12,22 +28,15 @@ class UserCreateSerializer(BaseUserCreateSerializer):
         model = User
         fields = ('id', 'email', 'username', 'first_name',
                   'last_name', 'password')
+        extra_kwargs = {
+            'first_name': {'required': True},
+            'last_name': {'required': True},
+        }
         read_only_fields = ('id',)
 
 
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super().to_internal_value(data)
-
-
 class UserAvatarSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField(required=False)
+    avatar = Base64ImageField()
 
     class Meta:
         model = User

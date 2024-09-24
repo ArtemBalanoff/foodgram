@@ -1,5 +1,8 @@
+import random
+import string
 from django.db import models
 from django.contrib.auth import get_user_model
+from nanoid import generate
 
 from foodgram_backend.constants import NAME_MAX_LENGTH
 
@@ -43,6 +46,17 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField('Время приготовления')
     tags = models.ManyToManyField(Tag, related_name='recipes',
                                   verbose_name='Теги')
+    short_link = models.CharField(max_length=5, unique=True,
+                                  blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.short_link:
+            while True:
+                short_link = generate(size=5)
+                if not Recipe.objects.filter(short_link=short_link).exists():
+                    self.short_link = short_link
+                    break
+        super().save(*args, **kwargs)
 
 
 class RecipeIngredient(models.Model):
