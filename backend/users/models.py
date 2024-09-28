@@ -14,6 +14,17 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self.create_user(email, password, **extra_fields)
+
 
 class CustomUser(AbstractUser):
     email = models.EmailField('Эл. почта', unique=True)
@@ -26,10 +37,30 @@ class CustomUser(AbstractUser):
     subscriptions = models.ManyToManyField(
         'self', symmetrical=False, related_name='subscribers',
         verbose_name='Подписки')
-    favourites = models.ManyToManyField(
-        'recipes.Recipe', related_name='lovers', verbose_name='Избранное')
+    favorites = models.ManyToManyField(
+        'recipes.Recipe', related_name='favorited_by',
+        verbose_name='Избранное', through='favoriteRecipes')
     shopping_cart = models.ManyToManyField(
-        'recipes.Recipe', related_name='+', verbose_name='Корзина')
+        'recipes.Recipe', related_name='in_shopping_cart',
+        verbose_name='Корзина', through='ShoppingCartRecipes')
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'password']
     objects = CustomUserManager()
+
+    @property
+    def recipes_count(self):
+        return self.recipes.count()
+
+
+class favoriteRecipes(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
+                             related_name='favorites_intermediate')
+    recipe = models.ForeignKey('recipes.Recipe', on_delete=models.CASCADE,
+                               related_name='favorited_by_intermediate')
+
+
+class ShoppingCartRecipes(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
+                             related_name='shopping_cart_intermediate')
+    recipe = models.ForeignKey('recipes.Recipe', on_delete=models.CASCADE,
+                               related_name='in_shopping_cart_intermediate')

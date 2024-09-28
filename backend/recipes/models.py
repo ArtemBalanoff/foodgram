@@ -1,5 +1,3 @@
-import random
-import string
 from django.db import models
 from django.contrib.auth import get_user_model
 from nanoid import generate
@@ -60,6 +58,7 @@ class Recipe(models.Model):
 
 
 class RecipeIngredient(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
+                               related_name='ingredients_intermediate')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.PositiveIntegerField('Количество')

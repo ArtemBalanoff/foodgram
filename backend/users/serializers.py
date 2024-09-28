@@ -4,9 +4,16 @@ from djoser.serializers import (
     UserCreateSerializer as BaseUserCreateSerializer,
     UserSerializer as BaseUserSerializer)
 
+from recipes.models import Recipe
 from foodgram_backend.serializers import Base64ImageField
 
 User = get_user_model()
+
+
+class ShortRecipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class UserSerializer(BaseUserSerializer):
@@ -21,6 +28,20 @@ class UserSerializer(BaseUserSerializer):
         cur_user = self.context.get('request').user
         return bool(cur_user.is_authenticated
                     and obj in cur_user.subscriptions.all())
+
+
+class UserSerializerWithRecipes(UserSerializer):
+    recipes = serializers.SerializerMethodField()
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ('recipes', 'recipes_count')
+
+    def get_recipes(self, obj):
+        if recipes_limit := self.context.get('recipes_limit'):
+            recipes = obj.recipes.all()[:recipes_limit]
+        else:
+            recipes = obj.recipes.all()
+        return ShortRecipeSerializer(recipes, many=True).data
 
 
 class UserCreateSerializer(BaseUserCreateSerializer):
