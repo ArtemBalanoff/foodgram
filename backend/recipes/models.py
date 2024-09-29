@@ -1,9 +1,10 @@
-from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from nanoid import generate
-from django.core.validators import MinValueValidator, MaxValueValidator
-from foodgram_backend.constants import (
-    NAME_MAX_LENGTH, MIN_INGREDIENT_AMOUNT, MAX_INGREDIENT_AMOUNT)
+
+from foodgram_backend.constants import (MAX_INGREDIENT_AMOUNT,
+                                        MIN_INGREDIENT_AMOUNT, NAME_MAX_LENGTH)
 
 User = get_user_model()
 

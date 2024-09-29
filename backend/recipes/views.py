@@ -1,15 +1,14 @@
-from rest_framework import filters
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from .permissions import AuthorOrReadOnly
-from .models import Ingredient, Recipe, Tag
-from .serializers import (
-    IngredientSerializer, RecipeSerializer, TagSerializer)
 from django_filters.rest_framework import DjangoFilterBackend
-from .filters import RecipeFilter
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from users.serializers import ShortRecipeSerializer
+from .filters import RecipeFilter
+from .models import Ingredient, Recipe, Tag
+from .permissions import AuthorOrReadOnly
+from .serializers import IngredientSerializer, RecipeSerializer, TagSerializer
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.db import models
 
 from foodgram_backend.constants import NAME_MAX_LENGTH
 

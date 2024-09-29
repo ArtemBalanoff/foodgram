@@ -1,11 +1,12 @@
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from djoser.views import UserViewSet as BaseUserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+
 from users.serializers import UserAvatarSerializer, UserSerializerWithRecipes
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from djoser.views import UserViewSet as BaseUserViewSet
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
