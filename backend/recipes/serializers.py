@@ -1,9 +1,10 @@
 from rest_framework import serializers
-
+from foodgram_backend.constants import (
+    MIN_INGREDIENT_AMOUNT, MAX_INGREDIENT_AMOUNT,
+    MIN_COOKING_TIME, MAX_COOKING_TIME)
 from users.serializers import UserSerializer
 from foodgram_backend.serializers import Base64ImageField
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
-
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -32,9 +33,10 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
     def validate_amount(self, amount):
-        if amount < 1:
+        if not MIN_INGREDIENT_AMOUNT <= amount <= MAX_INGREDIENT_AMOUNT:
             raise serializers.ValidationError(
-                'Количество ингредиента не может быть меньше 1')
+                'Количество ингредиента должно быть в диапазоне от'
+                f'{MIN_INGREDIENT_AMOUNT} до {MAX_INGREDIENT_AMOUNT}.')
         return amount
 
     def to_representation(self, instance):
@@ -50,6 +52,8 @@ class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), many=True)
 
     class Meta:
         model = Recipe
@@ -69,24 +73,34 @@ class RecipeSerializer(serializers.ModelSerializer):
         return ingredients
 
     def validate_cooking_time(self, cooking_time):
-        if cooking_time < 1:
+        if not MIN_COOKING_TIME <= cooking_time <= MAX_COOKING_TIME:
             raise serializers.ValidationError(
-                'Время приготовления не может быть меньше минуты')
+                'Время приготовления должно быть в диапазоне от '
+                f'{MIN_COOKING_TIME} до {MAX_COOKING_TIME} минут.')
         return cooking_time
 
     def validate_tags(self, tags):
+        if not tags:
+            raise serializers.ValidationError(
+                'Теги - обязательное поле')
         if len(tags) != len(set(tags)):
             raise serializers.ValidationError(
                 'В вашем списке тегов есть повторяющиеся позиции')
         return tags
 
     def validate(self, attrs):
-        if not attrs.get('ingredients_intermediate'):
-            raise serializers.ValidationError(
-                'Ингредиенты - обязательное поле')
-        if not attrs.get('tags'):
-            raise serializers.ValidationError(
-                'Теги - обязательное поле')
+        # Из-за patch запроса, поля, которые нам нужны, пропускаются пустыми.
+        # Остается вариант только проверять это вручную.
+        required_fields = {'ingredients_intermediate', 'tags', 'name',
+                           'text', 'cooking_time'}
+        exc_dict = {}
+        for required_field in required_fields:
+            if not attrs.get(required_field):
+                if required_field == 'ingredients_intermediate':
+                    required_field = 'ingredients'
+                exc_dict[required_field] = 'Это обязательное поле.'
+        if exc_dict:
+            raise serializers.ValidationError(exc_dict)
         return attrs
 
     def create_ingredients(self, recipe, ingredients):

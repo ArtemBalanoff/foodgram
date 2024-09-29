@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.decorators import api_view, action
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from users.serializers import UserAvatarSerializer, UserSerializerWithRecipes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -11,6 +11,8 @@ User = get_user_model()
 
 
 class UserViewSet(BaseUserViewSet):
+    queryset = User.objects.all().prefetch_related(
+        'subscriptions', 'favorites_intermediate', 'shopping_cart_intermediate')
     permission_classes = (IsAuthenticated,)
 
     def get_permissions(self):

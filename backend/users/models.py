@@ -47,12 +47,25 @@ class CustomUser(AbstractUser):
     REQUIRED_FIELDS = ['username', 'password']
     objects = CustomUserManager()
 
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'пользователи'
+
+    def __str__(self):
+        if self.is_staff:
+            return self.email
+        return (self.first_name + ' ' + self.last_name)
+
     @property
     def recipes_count(self):
         return self.recipes.count()
 
+    @property
+    def subs_count(self):
+        return self.subscribers.count()
 
-class favoriteRecipes(models.Model):
+
+class FavoriteRecipes(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
                              related_name='favorites_intermediate')
     recipe = models.ForeignKey('recipes.Recipe', on_delete=models.CASCADE,
