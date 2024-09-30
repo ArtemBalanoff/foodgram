@@ -36,12 +36,12 @@ class CustomUser(AbstractUser):
         'Фамилия', max_length=NAME_MAX_LENGTH, blank=False)
     subscriptions = models.ManyToManyField(
         'self', symmetrical=False, related_name='subscribers',
-        verbose_name='Подписки')
+        verbose_name='Подписки', blank=True)
     favorites = models.ManyToManyField(
-        'recipes.Recipe', related_name='favorited_by',
+        'recipes.Recipe', related_name='favorited_by', blank=True,
         verbose_name='Избранное', through='favoriteRecipes')
     shopping_cart = models.ManyToManyField(
-        'recipes.Recipe', related_name='in_shopping_cart',
+        'recipes.Recipe', related_name='in_shopping_cart', blank=True,
         verbose_name='Корзина', through='ShoppingCartRecipes')
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'password']

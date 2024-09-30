@@ -5,8 +5,8 @@ from .models import Recipe, Tag
 
 class RecipeFilter(filters.FilterSet):
     tags = filters.ModelMultipleChoiceFilter(
-        field_name='tags__name',
-        to_field_name='name',
+        field_name='tags__slug',
+        to_field_name='slug',
         queryset=Tag.objects.all(),
         conjoined=False
     )

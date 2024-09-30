@@ -48,8 +48,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = RecipeIngredientSerializer(
-        many=True, source='ingredients_intermediate')
+    ingredients = RecipeIngredientSerializer(many=True)
     image = Base64ImageField()
     author = UserSerializer(read_only=True)
     is_favorited = serializers.SerializerMethodField()
@@ -93,13 +92,11 @@ class RecipeSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         # Из-за patch запроса, поля, которые нам нужны, пропускаются пустыми.
         # Остается вариант только проверять это вручную.
-        required_fields = {'ingredients_intermediate', 'tags', 'name',
+        required_fields = {'ingredients', 'tags', 'name',
                            'text', 'cooking_time'}
         exc_dict = {}
         for required_field in required_fields:
             if not attrs.get(required_field):
-                if required_field == 'ingredients_intermediate':
-                    required_field = 'ingredients'
                 exc_dict[required_field] = 'Это обязательное поле.'
         if exc_dict:
             raise serializers.ValidationError(exc_dict)
@@ -112,15 +109,15 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
-        ingredients = validated_data.pop('ingredients_intermediate')
+        ingredients = validated_data.pop('ingredients')
         recipe = super().create(validated_data)
         self.create_ingredients(recipe, ingredients)
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients = validated_data.pop('ingredients_intermediate')
+        ingredients = validated_data.pop('ingredients')
         super().update(instance, validated_data)
-        instance.ingredients.clear()
+        instance.ingredients.all().delete()
         self.create_ingredients(instance, ingredients)
         return instance
 

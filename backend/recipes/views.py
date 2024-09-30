@@ -1,4 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Sum
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -74,6 +75,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=('GET',), url_path='get-link')
     def get_link(self, request, *args, **kwargs):
         return Response(data={'short-link': self.get_object().short_link})
+
+    @action(detail=False, methods=('GET',))
+    def download_shopping_cart(self, request, *args, **kwargs):
+        aggregated_ingredients = request.user.shopping_cart.values(
+            'ingredients__ingredient__name',
+            'ingredients__ingredient__measurement_unit',
+        ).annotate(total_amount=Sum('ingredients__amount'))
+        ingredients_dict = {
+            item['ingredients__ingredient__name']:
+            (item['total_amount'],
+             item['ingredients__ingredient__measurement_unit'])
+            for item in aggregated_ingredients}
+        return Response(ingredients_dict)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):

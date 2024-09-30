@@ -15,14 +15,20 @@ class Ingredient(models.Model):
         KILOGRAM = 'kilogram', 'кг'
         MILILITER = 'mililiter', 'мл'
         LITER = 'liter', 'л'
-        TABLESPOON = 'tablespoon', 'ст.л.'
-        TEASPOON = 'teaspoon', 'ч.л.'
+        TABLESPOON = 'tablespoon', 'ст. л.'
+        TEASPOON = 'teaspoon', 'ч. л.'
         PINCH = 'pinch', 'щепотка'
         PIECE = 'piece', 'шт.'
         CLOVE = 'clove', 'долька'
         LEAF = 'leaf', 'лист'
         CUBE = 'cube', 'кубик'
         CUP = 'cup', 'стакан'
+        CHUNK = 'chunk', 'кусок'
+        BRANCH = 'branch', 'веточка'
+        DROP = 'drop', 'капля'
+        LOAF = 'loaf', 'батон'
+        CAN = 'can', 'банка'
+        HANDFUL = 'handful', 'горсть'
     name = models.CharField('Название', max_length=NAME_MAX_LENGTH)
     measurement_unit = models.TextField(
         'Единица измерения', choices=MeasurementUnits.choices,
@@ -33,7 +39,7 @@ class Ingredient(models.Model):
         verbose_name_plural = 'ингредиенты'
 
     def __str__(self):
-        return f'{self.name} - {self.measurement_unit}'
+        return f'{self.name} - {self.get_measurement_unit_display()}'
 
 
 class Tag(models.Model):
@@ -55,8 +61,6 @@ class Recipe(models.Model):
     name = models.CharField('Название', max_length=NAME_MAX_LENGTH)
     image = models.ImageField('Изображение', upload_to='recipes/images/')
     text = models.TextField('Описание')
-    ingredients = models.ManyToManyField(
-        Ingredient, through='RecipeIngredient', verbose_name='Ингредиенты')
     cooking_time = models.PositiveSmallIntegerField('Время приготовления')
     tags = models.ManyToManyField(Tag, related_name='recipes',
                                   through='RecipeTag', verbose_name='Теги')
@@ -79,11 +83,16 @@ class Recipe(models.Model):
                     break
         super().save(*args, **kwargs)
 
+    @property
+    def favorited_count(self):
+        return self.favorited_by.count()
+
 
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
-                               related_name='ingredients_intermediate')
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+                               related_name='ingredients', verbose_name='Рецепт')
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE,
+                                   verbose_name='Ингредиент')
     amount = models.PositiveIntegerField(
         'Количество', validators=(MinValueValidator(MIN_INGREDIENT_AMOUNT),
                                   MaxValueValidator(MAX_INGREDIENT_AMOUNT)))
@@ -93,13 +102,21 @@ class RecipeIngredient(models.Model):
             models.UniqueConstraint(fields=('recipe', 'ingredient'),
                                     name='unique_recipe_ingredient')]
 
+    def __str__(self):
+        return self.ingredient.name
+
 
 class RecipeTag(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
+                               verbose_name='Рецепт')
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE,
+                            verbose_name='Тег')
 
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=('recipe', 'tag'),
                                     name='unique_recipe_tag')
         ]
+
+    def __str__(self):
+        return self.tag.name
