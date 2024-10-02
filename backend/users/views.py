@@ -13,7 +13,8 @@ User = get_user_model()
 
 class UserViewSet(BaseUserViewSet):
     queryset = User.objects.all().prefetch_related(
-        'subscriptions', 'favorites_intermediate', 'shopping_cart_intermediate')
+        'subscriptions', 'favorites_intermediate',
+        'shopping_cart_intermediate')
     permission_classes = (IsAuthenticated,)
 
     def get_permissions(self):
@@ -60,7 +61,7 @@ class UserViewSet(BaseUserViewSet):
         return Response(data=UserSerializerWithRecipes(
             user, context={'request': request,
                            'recipes_limit': recipes_limit}
-            ).data, status=status.HTTP_201_CREATED)
+        ).data, status=status.HTTP_201_CREATED)
 
     @subscribe.mapping.delete
     def subcribe_delete(self, request, *args, **kwargs):
