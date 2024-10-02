@@ -10,9 +10,14 @@ from users.serializers import UserSerializer
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    measurement_unit = serializers.SerializerMethodField()
+
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
+
+    def get_measurement_unit(self, obj):
+        return obj.get_measurement_unit_display()
 
 
 class TagSerializer(serializers.ModelSerializer):

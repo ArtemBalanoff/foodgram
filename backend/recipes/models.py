@@ -65,7 +65,7 @@ class Recipe(models.Model):
     tags = models.ManyToManyField(Tag, related_name='recipes',
                                   through='RecipeTag', verbose_name='Теги')
     short_link = models.CharField(max_length=5, unique=True,
-                                  blank=True)
+                                  blank=True, verbose_name='Короткая ссылка')
 
     class Meta:
         verbose_name = 'Рецепт'
@@ -89,8 +89,9 @@ class Recipe(models.Model):
 
 
 class RecipeIngredient(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
-                               related_name='ingredients', verbose_name='Рецепт')
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE,
+        related_name='ingredients', verbose_name='Рецепт')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE,
                                    verbose_name='Ингредиент')
     amount = models.PositiveIntegerField(
