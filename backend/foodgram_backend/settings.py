@@ -7,15 +7,15 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-9ng4oqv%(#8#v&w8#()m7)2+#!bzzk749_b@(aa6(x*y1w(jjb')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG_STR = os.getenv('DEBUG')
 DEBUG = DEBUG_STR == 'True'
 
-DJANGO_ENV = os.getenv('DJANGO_ENV', 'production')
+DJANGO_ENV = os.getenv('DJANGO_ENV')
 
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS').split()
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(', ')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
