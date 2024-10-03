@@ -1,10 +1,11 @@
-from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Sum
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from recipes.utils import convert_dict_to_text
 from users.serializers import ShortRecipeSerializer
 from .filters import RecipeFilter
 from .models import Ingredient, Recipe, Tag
@@ -78,6 +79,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=('GET',))
     def download_shopping_cart(self, request, *args, **kwargs):
+        measurement_unit_name_dict = {
+            choice[0]: choice[1] for choice
+            in Ingredient.MeasurementUnits.choices}
         aggregated_ingredients = request.user.shopping_cart.values(
             'ingredients__ingredient__name',
             'ingredients__ingredient__measurement_unit',
@@ -85,9 +89,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ingredients_dict = {
             item['ingredients__ingredient__name']:
             (item['total_amount'],
-             item['ingredients__ingredient__measurement_unit'])
+             measurement_unit_name_dict.get(
+                 item['ingredients__ingredient__measurement_unit']))
             for item in aggregated_ingredients}
-        return Response(ingredients_dict)
+        return Response(convert_dict_to_text(ingredients_dict))
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):

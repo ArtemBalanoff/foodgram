@@ -1,11 +1,38 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.forms.models import BaseInlineFormSet
+
 from .forms import RecipeAdminForm
 from .models import Ingredient, Recipe, RecipeIngredient, Tag
 
 
-class IngredientInLine(admin.StackedInline):
+class RequiredInlineModelFormset(BaseInlineFormSet):
+    '''
+    Кастомный Formset с модифицированной валидацией для избежания случаев
+    создания админом рецептов без ингредиентов, что противоречит ТЗ.
+    '''
+    def clean(self):
+        super().clean()
+        # Не при всех вызовах у RecipeIngredientFormFormSet
+        # есть аттрибут cleaned_data.
+        cleaned_data = getattr(self, 'cleaned_data', None)
+        if cleaned_data is not None:
+            if not cleaned_data:
+                raise ValidationError('Ингредиенты - обязательное поле.')
+            if not all(item.get('ingredient') and item.get('amount')
+                       for item in cleaned_data):
+                raise ValidationError(
+                    'Отправлять пустые ингредиенты нельзя.')
+            if all(item.get('DELETE') for item in cleaned_data):
+                raise ValidationError(
+                    'Вы не можете удалить все ингредиенты, '
+                    'ингредиенты - обязательное поле.')
+
+
+class IngredientInLine(admin.TabularInline):
+    formset = RequiredInlineModelFormset
     model = RecipeIngredient
-    extra = 1
+    extra = 0
     verbose_name = 'Игредиент'
     verbose_name_plural = 'игредиенты*'
 
