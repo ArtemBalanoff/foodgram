@@ -37,6 +37,7 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'ингредиенты'
+        ordering = ('name',)
 
     def __str__(self):
         return f'{self.name} - {self.get_measurement_unit_display()}'
@@ -49,6 +50,7 @@ class Tag(models.Model):
     class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'теги'
+        ordering = ('name',)
 
     def __str__(self):
         return self.name
@@ -72,7 +74,7 @@ class Recipe(models.Model):
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'рецепты'
-        ordering = ('created_at',)
+        ordering = ('-created_at',)
 
     def __str__(self):
         return self.name
