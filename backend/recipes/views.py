@@ -4,9 +4,10 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.http import HttpResponse
 
-from recipes.utils import convert_dict_to_text
 from users.serializers import ShortRecipeSerializer
+from .utils import convert_dict_to_text, generate_pdf_in_memory
 from .filters import RecipeFilter
 from .models import Ingredient, Recipe, Tag
 from .permissions import AuthorOrReadOnly
@@ -96,7 +97,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
              measurement_unit_name_dict.get(
                  item['ingredients__ingredient__measurement_unit']))
             for item in aggregated_ingredients}
-        return Response(convert_dict_to_text(ingredients_dict))
+        text = convert_dict_to_text(ingredients_dict)
+        pdf = generate_pdf_in_memory(text)
+        response = HttpResponse(pdf, content_type='application/pdf')
+        return response
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
