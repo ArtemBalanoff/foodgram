@@ -75,7 +75,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=('GET',), url_path='get-link')
     def get_link(self, request, *args, **kwargs):
-        return Response(data={'short-link': self.get_object().short_link})
+        protocol = 'https' if request.is_secure() else 'http'
+        host = request.get_host()
+        return Response(data={
+            'short-link':
+            f'{protocol}://{host}/s/{self.get_object().short_link}'})
 
     @action(detail=False, methods=('GET',))
     def download_shopping_cart(self, request, *args, **kwargs):
