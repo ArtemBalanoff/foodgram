@@ -66,10 +66,13 @@ class Recipe(models.Model):
                                   through='RecipeTag', verbose_name='Теги')
     short_link = models.CharField(max_length=5, unique=True,
                                   blank=True, verbose_name='Короткая ссылка')
+    created_at = models.DateTimeField(
+        'Время создания', auto_now_add=True, blank=True)
 
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'рецепты'
+        ordering = ('created_at',)
 
     def __str__(self):
         return self.name

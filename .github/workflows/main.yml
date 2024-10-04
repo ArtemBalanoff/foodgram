@@ -62,12 +62,12 @@ jobs:
           DEBUG: True
           ALLOWED_HOSTS: '*'
           SECRET_KEY: secretkey
-          CSRF_TRUSTED_ORIGINS: https://dentistry.servebeer.com
+          CSRF_TRUSTED_ORIGINS: https://foodgram.servebeer.com
           DJANGO_ENV: production
         run: |
           cd backend/
           python3 manage.py migrate
-          python3 manage.py loaddata db.json
+          python3 manage.py loaddata users_tags_ingredients.json
           python3 manage.py runserver &
 
       - name: Install Node.js
@@ -209,12 +209,12 @@ jobs:
             cd foodgram
             source .env
             sudo docker compose -f docker-compose.production.yml pull
-            sudo docker compose -f docker-compose.production.yml down
+            sudo docker compose -f docker-compose.production.yml down -v
             sudo docker compose -f docker-compose.production.yml up -d
             until sudo docker compose -f docker-compose.production.yml exec db pg_isready -U $POSTGRES_USER; do
               sleep 10
             done
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
-            sudo docker compose -f docker-compose.production.yml exec backend python manage.py loaddata db.json
+            sudo docker compose -f docker-compose.production.yml exec backend python manage.py loaddata users_tags_ingredients.json
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --no-input
             sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
