@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.db.models import F, Q
 
 from foodgram_backend.constants import NAME_MAX_LENGTH
 
@@ -34,13 +35,13 @@ class CustomUser(AbstractUser):
         'Фамилия', max_length=NAME_MAX_LENGTH, blank=False)
     subscriptions = models.ManyToManyField(
         'self', symmetrical=False, related_name='subscribers',
-        verbose_name='Подписки', blank=True)
+        verbose_name='Подписки', blank=True, through='Subscription')
     favorites = models.ManyToManyField(
         'recipes.Recipe', related_name='favorited_by', blank=True,
-        verbose_name='Избранное', through='favoriteRecipes')
+        verbose_name='Избранное', through='recipes.Favorite')
     shopping_cart = models.ManyToManyField(
         'recipes.Recipe', related_name='in_shopping_cart', blank=True,
-        verbose_name='Корзина', through='ShoppingCartRecipes')
+        verbose_name='Корзина', through='recipes.ShoppingCart')
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'password']
     objects = CustomUserManager()
@@ -64,15 +65,27 @@ class CustomUser(AbstractUser):
         return self.subscribers.count()
 
 
-class FavoriteRecipes(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
-                             related_name='favorites_intermediate')
-    recipe = models.ForeignKey('recipes.Recipe', on_delete=models.CASCADE,
-                               related_name='favorited_by_intermediate')
+class Subscription(models.Model):
+    subscriber = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE,
+        verbose_name='Подписчик', related_name='+')
+    author = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE,
+        verbose_name='Автор', related_name='+')
 
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'подписки'
+        constraints = [
+            models.CheckConstraint(
+                check=~Q(subscriber=F('author')),
+                name='prevent_self_subscription'
+            ),
+            models.UniqueConstraint(
+                fields=('subscriber', 'author'),
+                name='unique_subscriber_author'
+            )
+        ]
 
-class ShoppingCartRecipes(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
-                             related_name='shopping_cart_intermediate')
-    recipe = models.ForeignKey('recipes.Recipe', on_delete=models.CASCADE,
-                               related_name='in_shopping_cart_intermediate')
+    def __str__(self):
+        return f'Подписка: {self.subscriber} - {self.author}'

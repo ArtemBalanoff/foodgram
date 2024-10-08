@@ -4,9 +4,28 @@ from django.db import models
 from nanoid import generate
 
 from foodgram_backend.constants import (MAX_INGREDIENT_AMOUNT,
-                                        MIN_INGREDIENT_AMOUNT, NAME_MAX_LENGTH)
+                                        MIN_INGREDIENT_AMOUNT, NAME_MAX_LENGTH,
+                                        SHORT_LINK_LENGTH)
 
 User = get_user_model()
+
+
+class UserRecipeAbstract(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, verbose_name='Пользователь',
+        related_name='%(class)s_recipes_related')
+    recipe = models.ForeignKey(
+        'recipes.Recipe', on_delete=models.CASCADE, verbose_name='Рецепт',
+        related_name='%(class)s_users_related')
+
+    class Meta:
+        abstract = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='%(class)s_unique_user_recipe'
+            )
+        ]
 
 
 class Ingredient(models.Model):
@@ -66,8 +85,10 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField('Время приготовления')
     tags = models.ManyToManyField(Tag, related_name='recipes',
                                   through='RecipeTag', verbose_name='Теги')
-    short_link = models.CharField(max_length=5, unique=True,
-                                  blank=True, verbose_name='Короткая ссылка')
+    short_link = models.CharField(
+        max_length=SHORT_LINK_LENGTH, unique=True, db_index=True,
+        blank=True, verbose_name='Короткая ссылка',
+        help_text='Введите комбинацию, длиной до 5 символов')
     created_at = models.DateTimeField(
         'Время создания', auto_now_add=True, blank=True)
 
@@ -82,7 +103,7 @@ class Recipe(models.Model):
     def save(self, *args, **kwargs):
         if not self.short_link:
             while True:
-                short_link = generate(size=5)
+                short_link = generate(size=SHORT_LINK_LENGTH)
                 if not Recipe.objects.filter(short_link=short_link).exists():
                     self.short_link = short_link
                     break
@@ -99,7 +120,7 @@ class RecipeIngredient(models.Model):
         related_name='ingredients', verbose_name='Рецепт')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE,
                                    verbose_name='Ингредиент')
-    amount = models.PositiveIntegerField(
+    amount = models.PositiveSmallIntegerField(
         'Количество', validators=(MinValueValidator(MIN_INGREDIENT_AMOUNT),
                                   MaxValueValidator(MAX_INGREDIENT_AMOUNT)))
 
@@ -119,6 +140,8 @@ class RecipeTag(models.Model):
                             verbose_name='Тег')
 
     class Meta:
+        verbose_name = 'Рецепт - тег'
+        verbose_name_plural = 'рецепты - теги'
         constraints = [
             models.UniqueConstraint(fields=('recipe', 'tag'),
                                     name='unique_recipe_tag')
@@ -126,3 +149,21 @@ class RecipeTag(models.Model):
 
     def __str__(self):
         return self.tag.name
+
+
+class Favorite(UserRecipeAbstract):
+    class Meta(UserRecipeAbstract.Meta):
+        verbose_name = 'Рецепт в избранном'
+        verbose_name_plural = 'рецепты в избранных'
+
+    def __str__(self):
+        return f'Избранное: {self.user} - {self.recipe}'
+
+
+class ShoppingCart(UserRecipeAbstract):
+    class Meta(UserRecipeAbstract.Meta):
+        verbose_name = 'Рецепт в корзине'
+        verbose_name_plural = 'рецепты в корзинах'
+
+    def __str__(self):
+        return f'Корзина: {self.user} - {self.recipe}'

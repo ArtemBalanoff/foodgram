@@ -120,11 +120,11 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'HIDE_USERS': False,
     'SERIALIZERS': {
-        'user_create': 'users.serializers.UserCreateSerializer',
-        'user_list': 'users.serializers.UserSerializer',
-        'user_detail': 'users.serializers.UserSerializer',
-        'user': 'users.serializers.UserSerializer',
-        'current_user': 'users.serializers.UserSerializer',
+        'user_create': 'api.serializers.UserCreateSerializer',
+        'user_list': 'api.serializers.UserSerializer',
+        'user_detail': 'api.serializers.UserSerializer',
+        'user': 'api.serializers.UserSerializer',
+        'current_user': 'api.serializers.UserSerializer',
     },
     'PERMISSIONS': {
         'user_list': ['rest_framework.permissions.AllowAny'],
@@ -133,7 +133,7 @@ DJOSER = {
 }
 
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'DEFAULT_PAGINATION_CLASS': 'foodgram_backend.pagination.PageLimitPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',

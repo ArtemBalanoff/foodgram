@@ -3,7 +3,8 @@ from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
 
 from .forms import RecipeAdminForm
-from .models import Ingredient, Recipe, RecipeIngredient, Tag
+from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                     ShoppingCart, Tag)
 
 
 class RequiredInlineModelFormset(BaseInlineFormSet):
@@ -13,8 +14,6 @@ class RequiredInlineModelFormset(BaseInlineFormSet):
     '''
     def clean(self):
         super().clean()
-        # Не при всех вызовах у RecipeIngredientFormFormSet
-        # есть аттрибут cleaned_data.
         cleaned_data = getattr(self, 'cleaned_data', None)
         if cleaned_data is not None:
             if not cleaned_data:
@@ -43,7 +42,8 @@ class RecipeAdmin(admin.ModelAdmin):
     inlines = (IngredientInLine,)
     list_display = ('name', 'get_short_text', 'cooking_time', 'author',
                     'get_tags', 'get_favorited_count')
-    search_fields = ('name', 'author')
+    search_fields = ('name', 'author__first_name', 'author__last_name',
+                     'author__email')
     list_filter = ('tags',)
 
     @admin.display(description='В избранных у:')
@@ -71,3 +71,26 @@ class IngredientAdmin(admin.ModelAdmin):
     list_editable = ('measurement_unit',)
     search_fields = ('name',)
     list_filter = ('measurement_unit',)
+
+
+@admin.register(Recipe.tags.through)
+class RecipeTagAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'tag')
+    list_filter = ('recipe', 'tag')
+    search_fields = ('recipe__name', 'tag__name')
+
+
+@admin.register(Favorite)
+class RecipeFavoriteAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'user')
+    list_filter = ('recipe', 'user')
+    search_fields = ('recipe__name', 'user__username', 'user__first_name',
+                     'user__last_name', 'user__email')
+
+
+@admin.register(ShoppingCart)
+class RecipeShoppingCartAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'user')
+    list_filter = ('recipe', 'user')
+    search_fields = ('recipe__name', 'user__username', 'user__first_name',
+                     'user__last_name', 'user__email')
