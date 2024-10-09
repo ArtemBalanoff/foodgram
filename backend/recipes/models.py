@@ -15,7 +15,7 @@ class UserRecipeAbstract(models.Model):
         User, on_delete=models.CASCADE, verbose_name='Пользователь',
         related_name='%(class)s_recipes_related')
     recipe = models.ForeignKey(
-        'recipes.Recipe', on_delete=models.CASCADE, verbose_name='Рецепт',
+        'Recipe', on_delete=models.CASCADE, verbose_name='Рецепт',
         related_name='%(class)s_users_related')
 
     class Meta:
@@ -125,6 +125,8 @@ class RecipeIngredient(models.Model):
                                   MaxValueValidator(MAX_INGREDIENT_AMOUNT)))
 
     class Meta:
+        verbose_name = 'Рецепт - ингредиент'
+        verbose_name_plural = 'рецепты - ингредиенты'
         constraints = [
             models.UniqueConstraint(fields=('recipe', 'ingredient'),
                                     name='unique_recipe_ingredient')]

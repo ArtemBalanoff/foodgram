@@ -141,8 +141,7 @@ class RecipeIngredientCreateSerializer(RecipeIngredientReadSerializer):
         pass
 
     def to_internal_value(self, data):
-        if 'id' in data.keys():
-            data['ingredient'] = data.pop('id')
+        data['ingredient'] = data.pop('id')
         return super().to_internal_value(data)
 
 
