@@ -1,28 +1,37 @@
-import base64
-
 from django.contrib.auth import get_user_model
-from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
 from rest_framework import serializers
 
-from foodgram_backend.fields import UserInstanceField
+from foodgram_backend.fields import (Base64ImageField, RecipeInstanceField,
+                                     UserInstanceField)
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
 from users.models import Subscription
-from .abstract_classes import FavoriteShoppingCartSerializer
 
 User = get_user_model()
 
 
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
+class FavoriteShoppingAbsSerializer(serializers.ModelSerializer):
+    user = UserInstanceField()
+    recipe = RecipeInstanceField()
 
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-        return super().to_internal_value(data)
+    class Meta:
+        model = None
+        fields = ('user', 'recipe')
+
+    def validate(self, attrs):
+        user = attrs.get('user')
+        recipe = attrs.get('recipe')
+        model = self.Meta.model
+        verbose_name = model._meta.verbose_name.lower()
+        if model.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError(
+                f'Такая запись {verbose_name} уже существует')
+        return attrs
+
+    def to_representation(self, instance):
+        return ShortRecipeSerializer(instance.recipe).data
 
 
 class UserSerializer(BaseUserSerializer):
@@ -150,8 +159,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(), many=True)
+    tags = TagSerializer(many=True)
 
     class Meta:
         model = Recipe
@@ -171,16 +179,12 @@ class RecipeReadSerializer(serializers.ModelSerializer):
             return False
         return obj.shoppingcart_users_related.filter(user=user).exists()
 
-    def to_representation(self, instance):
-        repr_dict = super().to_representation(instance)
-        repr_dict['tags'] = [
-            TagSerializer(tag).data for tag in instance.tags.all()]
-        return repr_dict
-
 
 class RecipeCreateSerializer(RecipeReadSerializer):
     ingredients = RecipeIngredientCreateSerializer(many=True)
     image = Base64ImageField()
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), many=True)
 
     class Meta(RecipeReadSerializer.Meta):
         pass
@@ -236,12 +240,17 @@ class RecipeCreateSerializer(RecipeReadSerializer):
         self.create_ingredients(instance, ingredients)
         return instance
 
+    def to_representation(self, instance):
+        return RecipeReadSerializer(
+            instance,
+            context={'request': self.context.get('request')}).data
 
-class FavoriteSerializer(FavoriteShoppingCartSerializer):
-    class Meta(FavoriteShoppingCartSerializer.Meta):
+
+class FavoriteSerializer(FavoriteShoppingAbsSerializer):
+    class Meta(FavoriteShoppingAbsSerializer.Meta):
         model = Favorite
 
 
-class ShoppingCartSerializer(FavoriteShoppingCartSerializer):
-    class Meta(FavoriteShoppingCartSerializer.Meta):
+class ShoppingCartSerializer(FavoriteShoppingAbsSerializer):
+    class Meta(FavoriteShoppingAbsSerializer.Meta):
         model = ShoppingCart

@@ -3,7 +3,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from nanoid import generate
 
-from foodgram_backend.constants import (MAX_INGREDIENT_AMOUNT,
+from foodgram_backend.constants import (MAX_COOKING_TIME,
+                                        MAX_INGREDIENT_AMOUNT,
+                                        MIN_COOKING_TIME,
                                         MIN_INGREDIENT_AMOUNT, NAME_MAX_LENGTH,
                                         SHORT_LINK_LENGTH)
 
@@ -82,7 +84,10 @@ class Recipe(models.Model):
     name = models.CharField('Название', max_length=NAME_MAX_LENGTH)
     image = models.ImageField('Изображение', upload_to='recipes/images/')
     text = models.TextField('Описание')
-    cooking_time = models.PositiveSmallIntegerField('Время приготовления')
+    cooking_time = models.PositiveSmallIntegerField(
+        'Время приготовления',
+        validators=(MinValueValidator(MIN_COOKING_TIME),
+                    MaxValueValidator(MAX_COOKING_TIME)))
     tags = models.ManyToManyField(Tag, related_name='recipes',
                                   through='RecipeTag', verbose_name='Теги')
     short_link = models.CharField(

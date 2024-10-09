@@ -81,7 +81,7 @@
    **Скрипт для загрузки списка ингредиентов:**
 
    ```bash
-   python3 manage.py import ingredients
+   python3 manage.py import_ingredients
    ```
 
    **Команда для загрузки записей, необходимых для Postman тестов(админ, ингредиенты, теги):**

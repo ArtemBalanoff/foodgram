@@ -1,9 +1,9 @@
 name: main workflow for foodgram
 on:
-  # workflow_dispatch:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
 
 jobs:
   backend_linter_tests:
@@ -209,7 +209,7 @@ jobs:
             cd foodgram
             source .env
             sudo docker compose -f docker-compose.production.yml pull
-            sudo docker compose -f docker-compose.production.yml down -v
+            sudo docker compose -f docker-compose.production.yml down
             sudo docker compose -f docker-compose.production.yml up -d
             until sudo docker compose -f docker-compose.production.yml exec db pg_isready -U $POSTGRES_USER; do
               sleep 10
